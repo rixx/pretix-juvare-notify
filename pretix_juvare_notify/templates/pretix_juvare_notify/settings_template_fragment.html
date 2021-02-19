@@ -1,0 +1,22 @@
+{% load i18n %}
+{% load bootstrap3 %}
+{% load mail_settings_preview %}
+
+<details class="panel panel-default">
+    <summary class="panel-heading">
+        <h4 class="panel-title">
+            <strong>{% trans title %}</strong>
+            <i class="fa fa-angle-down collapse-indicator"></i>
+        </h4>
+    </summary>
+    <div id="{{ field.name }}">
+        <div class="panel-body">
+            <div id="{{ item }}_panel" class="preview-panel form-group" for="{{ item }}">
+                <label class="col-md-3 control-label">{{ field.label }}</label>
+                <div class="col-md-9">
+                    {% bootstrap_field field show_label=False form_group_class="" %}
+                </div>
+            </div>
+        </div>
+    </div>
+</details>

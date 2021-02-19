@@ -1,0 +1,57 @@
+{% extends "pretixcontrol/event/settings_base.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+
+{% block title %} {% trans "Juvare Notify Templates" %} {% endblock %}
+
+{% block inside %}
+    <h1>{% trans "Juvare Notify Templates" %}</h1>
+    {% if not has_client_secret %}
+    <div class="alert alert-danger">
+        {% blocktrans trimmed %}
+        You currently cannot send SMS in your events because Juvare Notify has not been configured yet. Please do so now (or ask your administrator for help):
+        {% endblocktrans %}
+        <a href="/control/juvare-notify">{% trans "Settings" %}</a>
+    </div>
+    {% endif %}
+    <div class="alert alert-info">
+        <p>
+        {% blocktrans trimmed %}
+        To send SMS notifications to customers, you have to enable the Juvare Notify plugin in the event you want to use it in.
+        {% endblocktrans %}
+        </p>
+    </div>
+    <div class="alert alert-warning">
+        <p>
+        {% blocktrans trimmed %}
+        Additionally, SMS can only be sent to customers with known phone numbers.
+        Please go to the general event settings, to the “Customer and attendee data” tab, and enable customer phone numbers.
+        {% endblocktrans %}
+        </p>
+    </div>
+    <form action="" method="post" class="form-horizontal">
+        {% csrf_token %}
+        {% bootstrap_form_errors form %}
+        <div class="panel-group" id="questions_group">
+            {% blocktrans asvar title_placed_order %}Placed order{% endblocktrans %}
+            {% include "pretix_juvare_notify/settings_template_fragment.html" with title=title_placed_order field=form.juvare_text_order_placed %}
+
+            {% blocktrans asvar title_free_order %}Placed order (free){% endblocktrans %}
+            {% include "pretix_juvare_notify/settings_template_fragment.html" with title=title_free_order field=form.juvare_text_order_free %}
+
+            {% blocktrans asvar title_paid_order %}Order paid{% endblocktrans %}
+            {% include "pretix_juvare_notify/settings_template_fragment.html" with title=title_paid_order field=form.juvare_text_order_paid %}
+
+            {% blocktrans asvar title_changed_order %}Order changed{% endblocktrans %}
+            {% include "pretix_juvare_notify/settings_template_fragment.html" with title=title_changed_order field=form.juvare_text_order_changed %}
+
+            {% blocktrans asvar title_canceled_order %}Order canceled{% endblocktrans %}
+            {% include "pretix_juvare_notify/settings_template_fragment.html" with title=title_canceled_order field=form.juvare_text_order_canceled %}
+        </div>
+        <div class="form-group submit-group">
+            <button type="submit" class="btn btn-primary btn-save">
+                {% trans "Save" %}
+            </button>
+        </div>
+    </form>
+{% endblock %}

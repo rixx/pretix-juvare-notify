@@ -1,0 +1,35 @@
+{% extends "pretixcontrol/event/settings_base.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+
+{% block title %} {% trans "Juvare Notify Settings" %} {% endblock %}
+
+{% block inside %}
+    <h1>{% trans "Juvare Notify Settings" %}</h1>
+        <div class="alert alert-warning">
+            <p>
+            {% blocktrans trimmed %}
+            These credentials will be used for ALL organizers and events.
+            They will use the Juvare Notify API to send SMS.
+            {% endblocktrans %}
+            </p>
+            <p>
+            {% blocktrans trimmed %}
+            To use the Juvare Notify API in an event, it has to be enabled in the organizer account and in the event.
+            Additionally, only customers with a known phone number can be notified. Go to "Customer and attendee data" tab in event settings to enable phone number collection.
+            {% endblocktrans %}
+            </p>
+        </div>
+    <form action="" method="post" class="form-horizontal">
+        {% csrf_token %}
+        {% bootstrap_form_errors form %}
+        <fieldset>
+            {% bootstrap_field form.juvare_client_secret layout="control" %}
+        </fieldset>
+        <div class="form-group submit-group">
+            <button type="submit" class="btn btn-primary btn-save">
+                {% trans "Save" %}
+            </button>
+        </div>
+    </form>
+{% endblock %}
