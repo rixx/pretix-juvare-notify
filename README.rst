@@ -3,7 +3,7 @@ Send SMS with Juvare Notify
 
 This is a plugin for `pretix`_. 
 
-Additionally to sending emails with pretix, send SMS to your customers with Juvare Notify! Uses the built-in phone number field.
+Additionally to sending emails with pretix, send SMS to your customers with `Juvare Notify`_! Uses the built-in phone number field.
 
 Development setup
 -----------------
@@ -53,3 +53,4 @@ Released under the terms of the Apache License 2.0
 
 .. _pretix: https://github.com/pretix/pretix
 .. _pretix development setup: https://docs.pretix.eu/en/latest/development/setup.html
+.. _Juvare Notify: https://notify.lab.juvare.com/manage/swagger/index.html?urls.primaryName=V3
