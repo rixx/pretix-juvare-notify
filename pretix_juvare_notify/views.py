@@ -4,14 +4,17 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView
 from pretix.base.models.organizer import Organizer
-from pretix.control.permissions import AdministratorPermissionRequiredMixin
+from pretix.control.permissions import (
+    AdministratorPermissionRequiredMixin,
+    OrganizerPermissionRequiredMixin,
+)
 from pretix.control.views.organizer import OrganizerDetailViewMixin
 
 from .forms import JuvareGlobalSettingsForm, JuvareOrganizerSettingsForm
 
 
 class OrganizerSettings(
-    OrganizerDetailViewMixin, AdministratorPermissionRequiredMixin, FormView
+    OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, FormView
 ):
     model = Organizer
     permission = "can_change_organizer_settings"
@@ -34,7 +37,7 @@ class OrganizerSettings(
         return reverse(
             "plugins:pretix_juvare_notify:organizer-settings",
             kwargs={
-                "organizer": self.request.event.organizer.slug,
+                "organizer": self.request.organizer.slug,
             },
         )
 
