@@ -9,7 +9,7 @@ class JuvareGlobalSettingsForm(SettingsForm):
     juvare_api_url = forms.URLField(
         label=_("API URL"),
         help_text=_(
-            "Leave empty to use https://notify.lab.juvare.com. To send messages, 'manage/api/v3/notification' will be appended."
+            "Leave empty to use https://notify.lab.juvare.com/manage/. To send messages, '/api/v3/notification' will be appended."
         ),
         required=True,
     )

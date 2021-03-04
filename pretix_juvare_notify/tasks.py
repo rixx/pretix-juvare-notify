@@ -16,14 +16,14 @@ def juvare_send_task(text: str, to: str, event: int):
     with scope(organizer=event.organizer):
         client_secret = event.settings.juvare_client_secret  # global setting
         url = (
-            event.settings.juvare_api_url or "https://notify.lab.juvare.com"
+            event.settings.juvare_api_url or "https://notify.lab.juvare.com/manage/"
         )  # global setting
         if not (client_secret and url):
             return
 
         if url[-1] != "/":
             url += "/"
-        url += "manage/api/v3/notification"
+        url += "api/v3/notification"
 
         to = to.replace(" ", "")
         if event.settings.juvare_text_signature:
