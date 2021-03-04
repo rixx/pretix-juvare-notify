@@ -24,6 +24,7 @@
         {% csrf_token %}
         {% bootstrap_form_errors form %}
         <fieldset>
+            {% bootstrap_field form.juvare_api_url layout="control" %}
             {% bootstrap_field form.juvare_client_secret layout="control" %}
         </fieldset>
         <div class="form-group submit-group">

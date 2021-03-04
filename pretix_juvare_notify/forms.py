@@ -6,6 +6,13 @@ from pretix.base.settings import GlobalSettingsObject
 
 
 class JuvareGlobalSettingsForm(SettingsForm):
+    juvare_api_url = forms.URLField(
+        label=_("API URL"),
+        help_text=_(
+            "Leave empty to use https://notify.lab.juvare.com. To send messages, 'manage/api/v3/notification' will be appended."
+        ),
+        required=True,
+    )
     juvare_client_secret = forms.CharField(
         label=_("Client secret"),
         required=False,
@@ -28,9 +35,10 @@ class JuvareGlobalSettingsForm(SettingsForm):
             ] = "•••••••••••"
 
     def clean(self):
-        data = self.cleaned_data
+        data = super().clean()
         if not data.get("juvare_client_secret"):
             data["juvare_client_secret"] = self.initial.get("juvare_client_secret")
+        return data
 
 
 class JuvareOrganizerSettingsForm(SettingsForm):
