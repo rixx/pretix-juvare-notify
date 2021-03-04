@@ -42,6 +42,10 @@ class JuvareGlobalSettingsForm(SettingsForm):
 
 
 class JuvareOrganizerSettingsForm(SettingsForm):
+    juvare_billing_id = forms.CharField(
+        label=_("Billing ID"),
+        required=True,
+    )
     juvare_text_signature = I18nFormField(
         label=_("Signature"),
         required=False,

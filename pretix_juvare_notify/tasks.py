@@ -36,6 +36,7 @@ def juvare_send_task(text: str, to: str, event: int):
                 "message": text,
                 "repeatCount": 0,
                 "repeatDelay": 0,
+                "billingId": event.settings.juvare_billing_id,
             }
         ]
         requests.post(

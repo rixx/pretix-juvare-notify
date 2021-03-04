@@ -2,10 +2,10 @@
 {% load i18n %}
 {% load bootstrap3 %}
 
-{% block title %} {% trans "Juvare Notify Templates" %} {% endblock %}
+{% block title %} {% trans "Juvare Notify Settings" %} {% endblock %}
 
 {% block inside %}
-    <h1>{% trans "Juvare Notify Templates" %}</h1>
+    <h1>{% trans "Juvare Notify Settings" %}</h1>
     {% if not has_client_secret %}
     <div class="alert alert-danger">
         {% blocktrans trimmed %}
@@ -32,21 +32,30 @@
     <form action="" method="post" class="form-horizontal">
         {% csrf_token %}
         {% bootstrap_form_errors form %}
-        <div class="panel-group" id="questions_group">
-            {% blocktrans asvar title_placed_order %}Placed order{% endblocktrans %}
-            {% include "pretix_juvare_notify/settings_template_fragment.html" with title=title_placed_order field=form.juvare_text_order_placed %}
+        <div class="tabbed-form">
+            <fieldset>
+                <legend>{% trans "Juvare Notify Templates" %}</legend>
+                <div class="panel-group" id="questions_group">
+                    {% blocktrans asvar title_placed_order %}Placed order{% endblocktrans %}
+                    {% include "pretix_juvare_notify/settings_template_fragment.html" with title=title_placed_order field=form.juvare_text_order_placed %}
 
-            {% blocktrans asvar title_free_order %}Placed order (free){% endblocktrans %}
-            {% include "pretix_juvare_notify/settings_template_fragment.html" with title=title_free_order field=form.juvare_text_order_free %}
+                    {% blocktrans asvar title_free_order %}Placed order (free){% endblocktrans %}
+                    {% include "pretix_juvare_notify/settings_template_fragment.html" with title=title_free_order field=form.juvare_text_order_free %}
 
-            {% blocktrans asvar title_paid_order %}Order paid{% endblocktrans %}
-            {% include "pretix_juvare_notify/settings_template_fragment.html" with title=title_paid_order field=form.juvare_text_order_paid %}
+                    {% blocktrans asvar title_paid_order %}Order paid{% endblocktrans %}
+                    {% include "pretix_juvare_notify/settings_template_fragment.html" with title=title_paid_order field=form.juvare_text_order_paid %}
 
-            {% blocktrans asvar title_changed_order %}Order changed{% endblocktrans %}
-            {% include "pretix_juvare_notify/settings_template_fragment.html" with title=title_changed_order field=form.juvare_text_order_changed %}
+                    {% blocktrans asvar title_changed_order %}Order changed{% endblocktrans %}
+                    {% include "pretix_juvare_notify/settings_template_fragment.html" with title=title_changed_order field=form.juvare_text_order_changed %}
 
-            {% blocktrans asvar title_canceled_order %}Order canceled{% endblocktrans %}
-            {% include "pretix_juvare_notify/settings_template_fragment.html" with title=title_canceled_order field=form.juvare_text_order_canceled %}
+                    {% blocktrans asvar title_canceled_order %}Order canceled{% endblocktrans %}
+                    {% include "pretix_juvare_notify/settings_template_fragment.html" with title=title_canceled_order field=form.juvare_text_order_canceled %}
+                </div>
+            </fieldset>
+            <fieldset>
+                <legend>{% trans "Juvare Notify Settings" %}</legend>
+                {% bootstrap_field form.juvare_billing_id layout="control" %}
+            </fieldset>
         </div>
         <div class="form-group submit-group">
             <button type="submit" class="btn btn-primary btn-save">
