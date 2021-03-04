@@ -1,8 +1,11 @@
 import json
+import logging
 import requests
 from django_scopes import scope, scopes_disabled
 from pretix.base.models import Event
 from pretix.celery_app import app
+
+logger = logging.getLogger(__name__)
 
 
 @app.task()
@@ -39,7 +42,7 @@ def juvare_send_task(text: str, to: str, event: int):
                 "billingId": event.settings.juvare_billing_id,
             }
         ]
-        requests.post(
+        response = requests.post(
             url,
             data=json.dumps(body),
             headers={
@@ -48,6 +51,31 @@ def juvare_send_task(text: str, to: str, event: int):
                 "Content-Type": "application/json",
             },
         )
+        try:
+            response.raise_for_status()
+            message = f"SUCCESS: Sent Juvare Notify message with billing ID: {body[0]['billingId']} for {event.slug}. "
+            try:
+                content = response.json()
+                if content:
+                    message += f"Response: {content}"
+                else:
+                    message += "No details were provided."
+            except Exception:
+                message += "No details were provided."
+            logger.info(message)
+        except Exception as e:
+            message = f"Failed to send Juvare Notify message with billing ID {body[0]['billingId']} for {event.slug}. "
+            message += f"Error: {e}. "
+            message += f"Received API response {response.status_code}."
+            try:
+                content = response.json()
+                if content and isinstance(content, dict) and content.get("message"):
+                    message += f"It said: {content['message']}"
+                else:
+                    message += f"It contained no further message to explain the error."
+            except Exception:
+                message += "It had no readable JSON body with details."
+            logger.error(message)
 
 
 def juvare_send(*args, **kwargs):
