@@ -90,11 +90,24 @@ class JuvareOrganizerSettingsForm(SettingsForm):
     }
 
     def _set_field_placeholders(self, fn, base_parameters):
+        # from pretix.base.email import get_available_placeholders
         phs = [
             "{%s}" % p
-            for p in sorted(
-                base_parameters
-            )  # if we had an event: get_available_placeholders(Event(organizer=self.organizer), base_parameters).keys()
+            for p in [
+                "event",
+                "event_slug",
+                "code",
+                "total",
+                "currency",
+                "total_with_currency",
+                "expire_date",
+                "url",
+                "url_info_change",
+                "url_products_change",
+                "url_cancel",
+                "name",
+            ]
+            # if we had an event: get_available_placeholders(Event(organizer=self.organizer), base_parameters).keys()
         ]
         ht = _("Available placeholders: {list}").format(list=", ".join(phs))
         if self.fields[fn].help_text:
