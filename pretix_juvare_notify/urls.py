@@ -9,6 +9,16 @@ urlpatterns = [
     #     name="event-settings",
     # ),
     url(
+        r"^control/event/(?P<organizer>[^/]+)/(?P<event>[^/]+)/juvare-notify/$",
+        views.SenderView.as_view(),
+        name="send",
+    ),
+    url(
+        r"^control/event/(?P<organizer>[^/]+)/(?P<event>[^/]+)/juvare-notify/history/",
+        views.SMSHistoryView.as_view(),
+        name="history",
+    ),
+    url(
         r"^control/event/(?P<organizer>[^/]+)/juvare-notify$",
         views.OrganizerSettings.as_view(),
         name="organizer-settings",

@@ -1,12 +1,19 @@
 from decimal import Decimal
 from django.dispatch import receiver
 from django.urls import resolve, reverse
+from django.utils.translation import gettext_lazy as _
 from i18nfield.strings import LazyI18nString
 from pretix.base.email import get_email_context
 from pretix.base.i18n import language
 from pretix.base.services.mail import render_mail
 from pretix.base.settings import settings_hierarkey
-from pretix.base.signals import order_canceled, order_changed, order_paid, order_placed
+from pretix.base.signals import (
+    logentry_display,
+    order_canceled,
+    order_changed,
+    order_paid,
+    order_placed,
+)
 from pretix.control.signals import nav_event, nav_global, nav_organizer
 
 JUVARE_TEMPLATES = [
@@ -84,6 +91,77 @@ def navbar_global(sender, request, **kwargs):
             and "settings" in url.url_name,
         }
     ]
+
+
+@receiver(nav_event, dispatch_uid="juvare_nav_sendsms")
+def control_nav_import(sender, request=None, **kwargs):
+    url = resolve(request.path_info)
+    if not request.user.has_event_permission(
+        request.organizer, request.event, "can_change_orders", request=request
+    ):
+        return []
+    return [
+        {
+            "label": _("Send out SMS"),
+            "url": reverse(
+                "plugins:pretix_juvare_notify:send",
+                kwargs={
+                    "event": request.event.slug,
+                    "organizer": request.event.organizer.slug,
+                },
+            ),
+            "active": (
+                url.namespace == "plugins:pretix_juvare_notify"
+                and url.url_name == "send"
+            ),
+            "icon": "envelope",
+            "children": [
+                {
+                    "label": _("Send SMS"),
+                    "url": reverse(
+                        "plugins:pretix_juvare_notify:send",
+                        kwargs={
+                            "event": request.event.slug,
+                            "organizer": request.event.organizer.slug,
+                        },
+                    ),
+                    "active": (
+                        url.namespace == "plugins:pretix_juvare_notify"
+                        and url.url_name == "send"
+                    ),
+                },
+                {
+                    "label": _("SMS history"),
+                    "url": reverse(
+                        "plugins:pretix_juvare_notify:history",
+                        kwargs={
+                            "event": request.event.slug,
+                            "organizer": request.event.organizer.slug,
+                        },
+                    ),
+                    "active": (
+                        url.namespace == "plugins:pretix_juvare_notify"
+                        and url.url_name == "history"
+                    ),
+                },
+            ],
+        },
+    ]
+
+
+@receiver(signal=logentry_display)
+def pretixcontrol_logentry_display(sender, logentry, **kwargs):
+    plains = {
+        "pretix.plugins.pretix_juvare_notify.sent": _("SMS was sent"),
+        "pretix.plugins.pretix_juvare_notify.order.sms.sent": _(
+            "The order received a mass SMS."
+        ),
+        "pretix.plugins.pretix_juvare_notify.order.sms.sent.attendee": _(
+            "A ticket holder of this order received a mass SMS."
+        ),
+    }
+    if logentry.action_type in plains:
+        return plains[logentry.action_type]
 
 
 def juvare_order_message(order, template_name):

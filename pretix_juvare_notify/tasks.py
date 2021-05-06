@@ -2,7 +2,11 @@ import json
 import logging
 import requests
 from django_scopes import scope, scopes_disabled
-from pretix.base.models import Event
+from i18nfield.strings import LazyI18nString
+from pretix.base.email import get_email_context
+from pretix.base.i18n import language
+from pretix.base.models import Event, InvoiceAddress, Order, User
+from pretix.base.services.mail import TolerantDict
 from pretix.celery_app import app
 
 logger = logging.getLogger(__name__)
@@ -80,3 +84,35 @@ def juvare_send_task(text: str, to: str, event: int):
 
 def juvare_send(*args, **kwargs):
     juvare_send_task.apply_async(args=args, kwargs=kwargs)
+
+
+@app.task(acks_late=True)
+def send_bulk_sms(event: Event, user: int, message: dict, orders: list) -> None:
+    failures = []
+    message = LazyI18nString(message)
+    user = User.objects.get(pk=user) if user else None
+    orders = Order.objects.filter(pk__in=orders, event=event)
+    event = Event.objects.get(pk=event)
+
+    for o in orders:
+
+        if o.phone:
+            try:
+                ia = o.invoice_address
+            except InvoiceAddress.DoesNotExist:
+                ia = InvoiceAddress(order=o)
+
+            try:
+                with language(o.locale, event.settings.region):
+                    email_context = get_email_context(
+                        event=event, order=o, position_or_address=ia
+                    )
+                    message = str(message).format_map(TolerantDict(email_context))
+                    juvare_send(text=message, to=str(o.phone), event=event.pk)
+                    o.log_action(
+                        "pretix.plugins.pretix_juvare_notify.order.sms.sent",
+                        user=user,
+                        data={"message": message, "recipient": str(o.phone)},
+                    )
+            except Exception:
+                failures.append(str(o.phone))
