@@ -209,7 +209,7 @@ class SenderView(EventPermissionRequiredMixin, FormView):
 
         send_bulk_sms.apply_async(kwargs=kwargs)
         self.request.event.log_action(
-            "pretix.plugins.juvare_notify.sent",
+            "pretix.plugins.pretix_juvare_notify.sent",
             user=self.request.user,
             data=dict(form.cleaned_data),
         )
