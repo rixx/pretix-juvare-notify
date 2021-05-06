@@ -174,8 +174,8 @@ class SenderView(EventPermissionRequiredMixin, FormView):
             return self.get(self.request, *self.args, **self.kwargs)
 
         if self.request.POST.get("action") == "preview":
-            for l in self.request.event.settings.locales:
-                with language(l, self.request.event.settings.region):
+            for loc in self.request.event.settings.locales:
+                with language(loc, self.request.event.settings.region):
                     context_dict = TolerantDict()
                     for k, v in get_available_placeholders(
                         self.request.event, ["event", "order", "position_or_address"]
@@ -189,12 +189,12 @@ class SenderView(EventPermissionRequiredMixin, FormView):
                             v.render_sample(self.request.event),
                         )
 
-                    message = form.cleaned_data["message"].localize(l)
+                    message = form.cleaned_data["message"].localize(loc)
                     preview_text = markdown_compile_email(
                         message.format_map(context_dict)
                     )
 
-                    self.output[l] = {
+                    self.output[loc] = {
                         "html": preview_text,
                     }
 

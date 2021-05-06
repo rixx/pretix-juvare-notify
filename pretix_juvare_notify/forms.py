@@ -130,7 +130,7 @@ class JuvareOrganizerSettingsForm(SettingsForm):
 
 
 class SMSForm(forms.Form):
-    """ Heavily copied from pretix.plugins.sendmail.forms.MailForm """
+    """Heavily copied from pretix.plugins.sendmail.forms.MailForm"""
 
     sendto = forms.MultipleChoiceField()  # overridden later
     message = forms.CharField(label=_("Message"))

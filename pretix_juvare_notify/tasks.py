@@ -76,7 +76,7 @@ def juvare_send_task(text: str, to: str, event: int):
                 if content and isinstance(content, dict) and content.get("message"):
                     message += f"It said: {content['message']}"
                 else:
-                    message += f"It contained no further message to explain the error."
+                    message += "It contained no further message to explain the error."
             except Exception:
                 message += "It had no readable JSON body with details."
             logger.error(message)
