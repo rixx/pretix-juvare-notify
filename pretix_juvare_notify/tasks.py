@@ -114,5 +114,8 @@ def send_bulk_sms(event: Event, user: int, message: dict, orders: list) -> None:
                         user=user,
                         data={"message": message, "recipient": str(o.phone)},
                     )
-            except Exception:
+            except Exception as e:
                 failures.append(str(o.phone))
+                logger.error(
+                    f"Failed to send part of a bulk message for order {o.code} ({event.slug}):\n{e}"
+                )
