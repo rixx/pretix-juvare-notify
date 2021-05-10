@@ -14,7 +14,12 @@ from pretix.base.signals import (
     order_paid,
     order_placed,
 )
-from pretix.control.signals import nav_event, nav_global, nav_organizer
+from pretix.control.signals import (
+    nav_event,
+    nav_event_settings,
+    nav_global,
+    nav_organizer,
+)
 
 JUVARE_TEMPLATES = [
     "juvare_text_signature",
@@ -52,8 +57,8 @@ def navbar_organizer(sender, request, **kwargs):
     ]
 
 
-@receiver(nav_event, dispatch_uid="juvare_nav_event")
-def navbar_event(sender, request, **kwargs):
+@receiver(nav_event_settings, dispatch_uid="juvare_nav_event_settings")
+def navbar_event_settings(sender, request, **kwargs):
     if not request.user.has_organizer_permission(
         request.organizer, "can_change_organizer_settings", request
     ):
@@ -61,14 +66,13 @@ def navbar_event(sender, request, **kwargs):
     url = resolve(request.path_info)
     return [
         {
-            "label": "Juvare Notify",
+            "label": "Juvare Notify Settings",
             "url": reverse(
                 "plugins:pretix_juvare_notify:organizer-settings",
                 kwargs={
                     "organizer": request.organizer.slug,
                 },
             ),
-            "icon": "mobile-phone",
             "active": url.namespace == "plugins:pretix_juvare_notify"
             and "settings" in url.url_name,
         }
@@ -114,7 +118,7 @@ def control_nav_import(sender, request=None, **kwargs):
                 url.namespace == "plugins:pretix_juvare_notify"
                 and url.url_name == "send"
             ),
-            "icon": "envelope",
+            "icon": "mobile-phone",
             "children": [
                 {
                     "label": _("Send SMS"),
