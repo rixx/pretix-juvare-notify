@@ -13,6 +13,8 @@ class SubEventReminder(models.Model):
         verbose_name=pgettext_lazy("subevent", "Date"),
         related_name="juvare_reminder",
     )
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
     STATUS_STARTED = "s"
     STATUS_FINISHED = "f"
     STATUS_CHOICE = (
