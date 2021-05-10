@@ -88,34 +88,34 @@ def juvare_send(*args, **kwargs):
 
 @app.task(acks_late=True)
 def send_bulk_sms(event: Event, user: int, message: dict, orders: list) -> None:
-    failures = []
-    message = LazyI18nString(message)
-    user = User.objects.get(pk=user) if user else None
-    orders = Order.objects.filter(pk__in=orders, event=event)
     event = Event.objects.get(pk=event)
 
-    for o in orders:
+    with scope(organizer=event.organizer):
+        orders = Order.objects.filter(pk__in=orders, event=event)
+        message = LazyI18nString(message)
+        user = User.objects.get(pk=user) if user else None
 
-        if o.phone:
-            try:
-                ia = o.invoice_address
-            except InvoiceAddress.DoesNotExist:
-                ia = InvoiceAddress(order=o)
+        for o in orders:
 
-            try:
-                with language(o.locale, event.settings.region):
-                    email_context = get_email_context(
-                        event=event, order=o, position_or_address=ia
+            if o.phone:
+                try:
+                    ia = o.invoice_address
+                except InvoiceAddress.DoesNotExist:
+                    ia = InvoiceAddress(order=o)
+
+                try:
+                    with language(o.locale, event.settings.region):
+                        email_context = get_email_context(
+                            event=event, order=o, position_or_address=ia
+                        )
+                        message = str(message).format_map(TolerantDict(email_context))
+                        juvare_send(text=message, to=str(o.phone), event=event.pk)
+                        o.log_action(
+                            "pretix.plugins.pretix_juvare_notify.order.sms.sent",
+                            user=user,
+                            data={"message": message, "recipient": str(o.phone)},
+                        )
+                except Exception as e:
+                    logger.error(
+                        f"Failed to send part of a bulk message for order {o.code} ({event.slug}):\n{e}"
                     )
-                    message = str(message).format_map(TolerantDict(email_context))
-                    juvare_send(text=message, to=str(o.phone), event=event.pk)
-                    o.log_action(
-                        "pretix.plugins.pretix_juvare_notify.order.sms.sent",
-                        user=user,
-                        data={"message": message, "recipient": str(o.phone)},
-                    )
-            except Exception as e:
-                failures.append(str(o.phone))
-                logger.error(
-                    f"Failed to send part of a bulk message for order {o.code} ({event.slug}):\n{e}"
-                )
