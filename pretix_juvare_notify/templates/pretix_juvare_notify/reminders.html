@@ -21,14 +21,36 @@
         </div>
         <form class="form-horizontal" method="post" action="" enctype="multipart/form-data">
             {% csrf_token %}
-            {% bootstrap_form_errors form %}
-            {% bootstrap_field form.juvare_send_reminders layout='horizontal' %}
-            {% bootstrap_field form.juvare_reminder_interval layout='horizontal' %}
-            {% bootstrap_field form.juvare_reminder_text layout='horizontal' %}
-            <div class="form-group submit-group">
-                <button type="submit" class="btn btn-primary btn-save">
-                    {% trans "Send" %}
-                </button>
+            <div class="tabbed-form">
+                <fieldset>
+                    <legend>{% trans "Settings" %}</legend>
+                    {% bootstrap_form_errors form %}
+                    {% bootstrap_field form.juvare_send_reminders layout='horizontal' %}
+                    {% bootstrap_field form.juvare_reminder_interval layout='horizontal' %}
+                    {% bootstrap_field form.juvare_reminder_text layout='horizontal' %}
+                    <div class="form-group submit-group">
+                        <button type="submit" class="btn btn-primary btn-save">
+                            {% trans "Send" %}
+                        </button>
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend>{% trans "History" %}</legend>
+                    <ul class="list-group">
+                    {% for reminder in sent_reminders %}
+                    <li class="list-group-item">
+                        <span class="fa fa-clock-o"></span> {{ reminder.updated|date:"SHORT_DATETIME_FORMAT" }}
+                        <span>
+                        {% blocktrans trimmed with se=reminder.subevent %}
+                            Sent reminder for {{ se }}
+                        {% endblocktrans %}
+                        </span>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item">{% trans "No reminders have been sent yet." %}</li>
+                    {% endfor %}
+                    </ul>
+                </fieldset>
             </div>
         </form>
     {% endif %}

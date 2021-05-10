@@ -21,6 +21,7 @@ from pretix.control.permissions import (
 from pretix.control.views.organizer import OrganizerDetailViewMixin
 
 from .forms import JuvareReminderSettingsForm, SMSForm
+from .models import SubEventReminder
 from .tasks import send_bulk_sms
 
 logger = logging.getLogger("pretix.plugins.sendmail")
@@ -312,7 +313,9 @@ class ReminderView(EventPermissionRequiredMixin, FormView):
 
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
-        ctx["sent_reminders"] = None
+        ctx["sent_reminders"] = SubEventReminder.objects.filter(
+            subevent__event=self.request.event
+        ).order_by("-updated")
         ctx["has_client_secret"] = bool(
             self.request.organizer.settings.juvare_client_secret
         )
