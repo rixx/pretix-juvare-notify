@@ -1,11 +1,20 @@
 import json
 import logging
 import requests
+from django.db.models import Exists, OuterRef
 from django_scopes import scope, scopes_disabled
 from i18nfield.strings import LazyI18nString
 from pretix.base.email import get_email_context
 from pretix.base.i18n import language
-from pretix.base.models import Event, InvoiceAddress, Order, User
+from pretix.base.models import (
+    Event,
+    InvoiceAddress,
+    Order,
+    OrderPosition,
+    Organizer,
+    SubEvent,
+    User,
+)
 from pretix.base.services.mail import TolerantDict
 from pretix.celery_app import app
 
@@ -88,13 +97,15 @@ def juvare_send(*args, **kwargs):
 
 @app.task(acks_late=True)
 def send_bulk_sms(event: Event, user: int, message: dict, orders: list) -> None:
-    event = Event.objects.get(pk=event)
+    with scopes_disabled():
+        event = Event.objects.all().select_related("organizer").get(pk=event)
 
     with scope(organizer=event.organizer):
+        print(orders)
         orders = Order.objects.filter(pk__in=orders, event=event)
         message = LazyI18nString(message)
         user = User.objects.get(pk=user) if user else None
-
+        print(orders)
         for o in orders:
 
             if o.phone:
@@ -119,3 +130,39 @@ def send_bulk_sms(event: Event, user: int, message: dict, orders: list) -> None:
                     logger.error(
                         f"Failed to send part of a bulk message for order {o.code} ({event.slug}):\n{e}"
                     )
+
+
+@app.task()
+def send_subevent_reminders(subevent: int):
+    from .models import SubEventReminder
+
+    with scope(
+        organizer=Organizer.objects.filter(events__subevents__pk=subevent).first()
+    ):
+        subevent = SubEvent.objects.get(pk=subevent)
+        status, created = SubEventReminder.objects.get_or_create(subevent=subevent)
+        if not created:
+            return
+        opq = OrderPosition.objects.filter(
+            order=OuterRef("pk"),
+            canceled=False,
+            subevent=subevent,
+        )
+        orders = (
+            Order.objects.filter(phone__isnull=False, event=subevent.event)
+            .annotate(match_pos=Exists(opq))
+            .filter(match_pos=True)
+            .distinct()
+        )
+        orders = orders.values_list("pk", flat=True)
+        if orders:
+            send_bulk_sms.apply_async(
+                kwargs={
+                    "user": None,
+                    "orders": list(orders),
+                    "message": subevent.event.settings.juvare_reminder_text.data,
+                    "event": subevent.event.pk,
+                }
+            )
+        status.status = "f"
+        status.save()

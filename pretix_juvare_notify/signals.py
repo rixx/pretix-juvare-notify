@@ -1,7 +1,11 @@
+import datetime as dt
 from decimal import Decimal
+from django.db.models import Exists, OuterRef
 from django.dispatch import receiver
 from django.urls import resolve, reverse
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
+from django_scopes import scopes_disabled
 from i18nfield.strings import LazyI18nString
 from pretix.base.email import get_email_context
 from pretix.base.i18n import language
@@ -13,6 +17,7 @@ from pretix.base.signals import (
     order_changed,
     order_paid,
     order_placed,
+    periodic_task,
 )
 from pretix.control.signals import (
     nav_event,
@@ -20,6 +25,8 @@ from pretix.control.signals import (
     nav_global,
     nav_organizer,
 )
+
+from .tasks import send_subevent_reminders
 
 JUVARE_TEMPLATES = [
     "juvare_text_signature",
@@ -35,6 +42,7 @@ for settings_name in JUVARE_TEMPLATES:
     settings_hierarkey.add_default(settings_name, "", LazyI18nString)
 settings_hierarkey.add_default("juvare_send_reminders", "false", bool)
 settings_hierarkey.add_default("juvare_reminder_interval", "0", int)
+settings_hierarkey.add_default("juvare_reminder_interval_cutoff", "0", int)
 
 
 @receiver(nav_organizer, dispatch_uid="juvare_nav_organizer")
@@ -242,3 +250,34 @@ def juvare_order_canceled(order, sender, **kwargs):
 @receiver(order_changed, dispatch_uid="juvare_order_changed")
 def juvare_order_changed(order, sender, **kwargs):
     juvare_order_message(order, "order_changed")
+
+
+@receiver(periodic_task, dispatch_uid="juvare_periodic_reminder")
+def juvare_periodic_reminder(*args, **kwargs):
+    from pretix.base.models.event import Event, Event_SettingsStore, SubEvent
+
+    with scopes_disabled():
+        active_events = (
+            Event.objects.filter(subevents__isnull=False)
+            .distinct()
+            .annotate(
+                send_reminders=Exists(
+                    Event_SettingsStore.objects.filter(
+                        key="juvare_send_reminders",
+                        value="True",
+                        object_id=OuterRef("pk"),
+                    )
+                )
+            )
+            .filter(send_reminders=True)
+        )
+        _now = now()
+        for subevent in SubEvent.objects.filter(
+            event__in=active_events, juvare_reminder__isnull=True, date_from__gt=_now
+        ):
+            if _now > subevent.date_from - dt.timedelta(
+                hours=int(subevent.event.settings.juvare_reminder_interval)
+            ) and _now < subevent.date_from - dt.timedelta(
+                hours=int(subevent.event.settings.juvare_reminder_interval_cutoff)
+            ):
+                send_subevent_reminders.apply_async(kwargs={"subevent": subevent.pk})

@@ -135,8 +135,17 @@ class JuvareReminderSettingsForm(SettingsForm):
         required=False,
     )
     juvare_reminder_interval = forms.IntegerField(
-        label=_("Reminder intervals"),
+        label=_("Reminder interval"),
         help_text=_("How many hours before the event should the reminder be sent?"),
+        required=False,
+    )
+    juvare_reminder_interval_cutoff = forms.IntegerField(
+        label=_("Reminder interval cutoff"),
+        help_text=_(
+            "At lest how many hours before the event should the reminder be sent? "
+            "This setting will only be used when you turn on reminders while already having active subevents, "
+            "to make sure that on the first run no unwanted reminders will be sent."
+        ),
         required=False,
     )
     juvare_reminder_text = I18nFormField(
