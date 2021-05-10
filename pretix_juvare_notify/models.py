@@ -11,6 +11,7 @@ class SubEventReminder(models.Model):
         blank=True,
         on_delete=models.CASCADE,
         verbose_name=pgettext_lazy("subevent", "Date"),
+        related_name="juvare_reminder",
     )
     STATUS_STARTED = "s"
     STATUS_FINISHED = "f"
