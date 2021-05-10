@@ -28,10 +28,13 @@ JUVARE_TEMPLATES = [
     "juvare_text_order_changed",
     "juvare_text_order_canceled",
     "juvare_text_order_paid",
+    "juvare_reminder_text",
 ]
 
 for settings_name in JUVARE_TEMPLATES:
     settings_hierarkey.add_default(settings_name, "", LazyI18nString)
+settings_hierarkey.add_default("juvare_send_reminders", "false", bool)
+settings_hierarkey.add_default("juvare_reminder_interval", "0", int)
 
 
 @receiver(nav_organizer, dispatch_uid="juvare_nav_organizer")
@@ -147,6 +150,18 @@ def control_nav_import(sender, request=None, **kwargs):
                         url.namespace == "plugins:pretix_juvare_notify"
                         and url.url_name == "history"
                     ),
+                },
+                {
+                    "label": "Reminders",
+                    "url": reverse(
+                        "plugins:pretix_juvare_notify:reminders",
+                        kwargs={
+                            "organizer": request.organizer.slug,
+                            "event": request.event.slug,
+                        },
+                    ),
+                    "active": url.namespace == "plugins:pretix_juvare_notify"
+                    and url.url_name == "reminders",
                 },
             ],
         },

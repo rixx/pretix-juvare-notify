@@ -14,6 +14,11 @@ urlpatterns = [
         name="send",
     ),
     url(
+        r"^control/event/(?P<organizer>[^/]+)/(?P<event>[^/]+)/juvare-notify/reminders$",
+        views.ReminderView.as_view(),
+        name="reminders",
+    ),
+    url(
         r"^control/event/(?P<organizer>[^/]+)/(?P<event>[^/]+)/juvare-notify/history/",
         views.SMSHistoryView.as_view(),
         name="history",

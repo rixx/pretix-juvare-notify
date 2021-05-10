@@ -1,0 +1,35 @@
+{% extends "pretixcontrol/event/base.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+{% block title %}{% trans "Send out SMS" %}{% endblock %}
+{% block content %}
+    <h1>{% trans "Send out SMS" %}</h1>
+
+    {% if not has_client_secret %}
+        <div class="alert alert-danger">
+            {% blocktrans trimmed %}
+            You currently cannot send SMS in your events because Juvare Notify has not been configured yet. Please do so now (or ask your administrator for help):
+            {% endblocktrans %}
+            <a href="/control/juvare-notify">{% trans "Settings" %}</a>
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            {% blocktrans trimmed %}
+                Please note that SMS are always sent on a per-order basis, not per-recipient.
+                SMS will only be sent if there is a phone number associated with the order.
+            {% endblocktrans %}
+        </div>
+        <form class="form-horizontal" method="post" action="" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% bootstrap_form_errors form %}
+            {% bootstrap_field form.juvare_send_reminders layout='horizontal' %}
+            {% bootstrap_field form.juvare_reminder_interval layout='horizontal' %}
+            {% bootstrap_field form.juvare_reminder_text layout='horizontal' %}
+            <div class="form-group submit-group">
+                <button type="submit" class="btn btn-primary btn-save">
+                    {% trans "Send" %}
+                </button>
+            </div>
+        </form>
+    {% endif %}
+{% endblock %}

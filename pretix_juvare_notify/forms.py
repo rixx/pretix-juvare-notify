@@ -129,6 +129,44 @@ class JuvareOrganizerSettingsForm(SettingsForm):
             self._set_field_placeholders(k, v)
 
 
+class JuvareReminderSettingsForm(SettingsForm):
+    juvare_send_reminders = forms.BooleanField(
+        label=_("Send reminders"),
+        required=False,
+    )
+    juvare_reminder_interval = forms.IntegerField(
+        label=_("Reminder intervals"),
+        help_text=_("How many hours before the event should the reminder be sent?"),
+        required=False,
+    )
+    juvare_reminder_text = I18nFormField(
+        label=_("Text"),
+        required=False,
+        widget=I18nTextarea,
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.event = kwargs.get("obj")
+        super().__init__(*args, **kwargs)
+        # if we had an event:
+        phs = get_available_placeholders(self.event, ["event", "order"]).keys()
+        self.fields["juvare_reminder_text"].validators.append(PlaceholderValidator(phs))
+        self.fields["juvare_reminder_text"].help_text = _(
+            "Available placeholders: {list}"
+        ).format(list=", ".join(phs))
+
+    def clean(self):
+        d = super().clean()
+        if d.get("juvare_send_reminders"):
+            if not (
+                d.get("juvare_reminder_interval") and str(d.get("juvare_reminder_text"))
+            ):
+                raise ValidationError(
+                    _("Please provide a reminder interval and a reminder text.")
+                )
+        return d
+
+
 class SMSForm(forms.Form):
     """Heavily copied from pretix.plugins.sendmail.forms.MailForm."""
 
