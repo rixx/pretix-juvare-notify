@@ -158,7 +158,10 @@ class JuvareReminderSettingsForm(SettingsForm):
         self.event = kwargs.get("obj")
         super().__init__(*args, **kwargs)
         # if we had an event:
-        phs = get_available_placeholders(self.event, ["event", "order"]).keys()
+        phs = [
+            "{ph}"
+            for ph in get_available_placeholders(self.event, ["event", "order"]).keys()
+        ]
         self.fields["juvare_reminder_text"].validators.append(PlaceholderValidator(phs))
         self.fields["juvare_reminder_text"].help_text = _(
             "Available placeholders: {list}"
