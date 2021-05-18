@@ -159,7 +159,7 @@ class JuvareReminderSettingsForm(SettingsForm):
         super().__init__(*args, **kwargs)
         # if we had an event:
         phs = [
-            "{ph}"
+            "{%s}" % ph
             for ph in get_available_placeholders(self.event, ["event", "order"]).keys()
         ]
         self.fields["juvare_reminder_text"].validators.append(PlaceholderValidator(phs))
