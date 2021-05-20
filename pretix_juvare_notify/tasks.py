@@ -101,14 +101,20 @@ def send_bulk_sms(event: Event, user: int, message: dict, orders: list) -> None:
         event = Event.objects.all().select_related("organizer").get(pk=event)
 
     with scope(organizer=event.organizer):
-        print(orders)
         orders = Order.objects.filter(pk__in=orders, event=event)
         message = LazyI18nString(message)
         user = User.objects.get(pk=user) if user else None
-        print(orders)
-        for o in orders:
+        logger.debug(
+            f"Sending bulk SMS to {len(orders)} recipients for event {event.slug}"
+        )
 
-            if o.phone:
+        success = 0
+        error = 0
+        skip = 0
+        for o in orders:
+            if not o.phone:
+                skip += 1
+            else:
                 try:
                     ia = o.invoice_address
                 except InvoiceAddress.DoesNotExist:
@@ -126,10 +132,15 @@ def send_bulk_sms(event: Event, user: int, message: dict, orders: list) -> None:
                             user=user,
                             data={"message": message, "recipient": str(o.phone)},
                         )
+                        success += 1
                 except Exception as e:
                     logger.error(
                         f"Failed to send part of a bulk message for order {o.code} ({event.slug}):\n{e}"
                     )
+                    error += 1
+        logger.debug(
+            f"Sending bulk SMS to {len(orders)} recipients for event {event.slug} resulted in {success} successful messages, {error} errors, {skip} skipped."
+        )
 
 
 @app.task()
@@ -143,6 +154,9 @@ def send_subevent_reminders(subevent: int):
         status, created = SubEventReminder.objects.get_or_create(subevent=subevent)
         if not created:
             return
+        logger.debug(
+            f"Sending bulk reminders for subevent {subevent} ({subevent.event.slug})"
+        )
         opq = OrderPosition.objects.filter(
             order=OuterRef("pk"),
             canceled=False,
@@ -155,6 +169,7 @@ def send_subevent_reminders(subevent: int):
             .distinct()
         )
         orders = orders.values_list("pk", flat=True)
+        logger.debug(f"Found {len(orders)} orders to be sent reminders.")
         if orders:
             send_bulk_sms.apply_async(
                 kwargs={
