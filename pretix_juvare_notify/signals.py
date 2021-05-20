@@ -1,4 +1,5 @@
 import datetime as dt
+import logging
 from decimal import Decimal
 from django.db.models import Exists, OuterRef
 from django.dispatch import receiver
@@ -43,6 +44,8 @@ for settings_name in JUVARE_TEMPLATES:
 settings_hierarkey.add_default("juvare_send_reminders", "false", bool)
 settings_hierarkey.add_default("juvare_reminder_interval", "0", int)
 settings_hierarkey.add_default("juvare_reminder_interval_cutoff", "0", int)
+
+logger = logging.getLogger(__name__)
 
 
 @receiver(nav_organizer, dispatch_uid="juvare_nav_organizer")
@@ -275,9 +278,17 @@ def juvare_periodic_reminder(*args, **kwargs):
         for subevent in SubEvent.objects.filter(
             event__in=active_events, juvare_reminder__isnull=True, date_from__gt=_now
         ):
+            logger.debug(f"Checking subevent {subevent} ({subevent.event.slug})")
             if _now > subevent.date_from - dt.timedelta(
                 hours=int(subevent.event.settings.juvare_reminder_interval)
             ) and _now < subevent.date_from - dt.timedelta(
                 hours=int(subevent.event.settings.juvare_reminder_interval_cutoff)
             ):
                 send_subevent_reminders.apply_async(kwargs={"subevent": subevent.pk})
+                logger.debug(
+                    f"Sending reminders for subevent {subevent} ({subevent.event.slug})"
+                )
+            else:
+                logger.debug(
+                    f"Not reminders for subevent {subevent} ({subevent.event.slug})"
+                )
