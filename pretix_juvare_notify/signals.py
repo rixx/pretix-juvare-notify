@@ -259,6 +259,7 @@ def juvare_order_changed(order, sender, **kwargs):
 def juvare_periodic_reminder(*args, **kwargs):
     from pretix.base.models.event import Event, Event_SettingsStore, SubEvent
 
+    logger.info("DUMMY log entry for pretix juvare notify runperiodic")
     with scopes_disabled():
         active_events = (
             Event.objects.filter(subevents__isnull=False)
@@ -274,6 +275,7 @@ def juvare_periodic_reminder(*args, **kwargs):
             )
             .filter(send_reminders=True)
         )
+        logger.info(f"Checking subevents of {len(active_events)} events for reminders.")
         _now = now()
         for subevent in SubEvent.objects.filter(
             event__in=active_events, juvare_reminder__isnull=True, date_from__gt=_now
