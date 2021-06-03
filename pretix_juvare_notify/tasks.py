@@ -126,12 +126,12 @@ def send_bulk_sms(event: Event, user: int, message: dict, orders: list) -> None:
                         email_context = get_email_context(
                             event=event, order=o, position_or_address=ia
                         )
-                        message = str(message).format_map(TolerantDict(email_context))
-                        juvare_send(text=message, to=str(o.phone), event=event.pk)
+                        text = str(message).format_map(TolerantDict(email_context))
+                        juvare_send(text=text, to=str(o.phone), event=event.pk)
                         o.log_action(
                             "pretix.plugins.pretix_juvare_notify.order.sms.sent",
                             user=user,
-                            data={"message": message, "recipient": str(o.phone)},
+                            data={"message": text, "recipient": str(o.phone)},
                         )
                         success += 1
                 except Exception as e:
