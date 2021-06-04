@@ -6,8 +6,6 @@ from django_scopes import scopes_disabled
 from pretix.base.models.log import LogEntry
 from pretix.multidomain.urlreverse import build_absolute_uri
 
-EXPORT_TO = ""
-
 
 class Command(BaseCommand):
     help = "Exports logs of sent bulk messages with recipient/URL mismatches."
@@ -18,10 +16,16 @@ class Command(BaseCommand):
             action="store_true",
             help="Include full messages in the export",
         )
+        parser.add_argument(
+            "--location",
+            help="Place the file here instead of writing to stdout",
+            default=None,
+        )
 
     @scopes_disabled()
     def handle(self, *args, **options):
         export_messages = options.get("with_messages")
+        location = options.get("location")
         all_bulk_send_logs = LogEntry.objects.filter(
             action_type="pretix.plugins.pretix_juvare_notify.order.sms.sent"
         ).select_related("event")
@@ -70,9 +74,9 @@ class Command(BaseCommand):
                     )
                     broken_url.append((log, order, target_url))
 
-        def write(fieldnames, data, filename):
-            if EXPORT_TO:
-                with open(pathlib.Path(EXPORT_TO) / filename, "w") as f:
+        def write(fieldnames, data, filename, location):
+            if location:
+                with open(pathlib.Path(location) / filename, "w") as f:
                     writer = csv.DictWriter(f, fieldnames=fieldnames)
                     writer.writeheader()
                     writer.writerows(data)
@@ -88,7 +92,7 @@ class Command(BaseCommand):
             fieldnames = ["order", "event", "order.phone", "recipient", "timestamp"]
             if export_messages:
                 fieldnames.append("message")
-            write(fieldnames, broken_recipient, "broken_recipients.csv")
+            write(fieldnames, broken_recipient, "broken_recipients.csv", location)
 
         print(
             f"Total SMS where an included URL does not match order's URL: {len(broken_url)}"
@@ -104,4 +108,4 @@ class Command(BaseCommand):
             ]
             if export_messages:
                 fieldnames.append("message")
-            write(fieldnames, broken_url, "broken_urls.csv")
+            write(fieldnames, broken_url, "broken_urls.csv", location)
