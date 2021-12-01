@@ -164,7 +164,11 @@ def send_subevent_reminders(subevent: int):
             subevent=subevent,
         )
         orders = (
-            Order.objects.filter(phone__isnull=False, event=subevent.event)
+            Order.objects.filter(
+                phone__isnull=False,
+                event=subevent.event,
+                status=Order.STATUS_PAID,
+            )
             .annotate(match_pos=Exists(opq))
             .filter(match_pos=True)
             .distinct()
